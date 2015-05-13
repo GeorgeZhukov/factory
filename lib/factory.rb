@@ -21,17 +21,78 @@ module Factory
           end
         end
 
+        def to_s
+          inspect
+        end
+
+        def to_h
+          @data
+        end
+
+        def values
+          @data.values
+        end
+
+        def eql?(other)
+          other.kind_of?(self.class) && self.to_h == other.to_h
+        end
+
+        def each_pair(&block)
+          if block_given?
+            @data.each &block
+            self
+          else
+            @data.each
+          end
+        end
+
+        def values_at(*args)
+          values.values_at *args
+        end
+
+        def each(&block)
+          if block_given?
+            values.each &block
+
+            # Return current object for chain calculations
+            # if block given
+            self
+          else
+            values.each
+          end
+        end
+
+        def members
+          @data.keys
+        end
+
+        def select(&block)
+          values.select &block
+        end
+
+        def size
+          @data.size
+        end
+
+        alias_method :length, :size
+        alias_method :to_a, :values
+        alias_method :==, :eql?
+
         def [](key)
-          if key.kind_of?(Symbol)
+          case key
+          when Symbol
             @data[key]
-          elsif key.kind_of?(String)
+          when String
             @data[key.to_sym]
-          elsif key.kind_of?(Integer)
+          when Integer
             data_array = @data.to_a
-            if key < data_array.size 
+            if key < data_array.size
               data_array[key].last
             end
           end
+        end
+
+        def []=(key, value)
         end
 
       end
