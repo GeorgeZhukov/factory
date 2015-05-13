@@ -3,6 +3,12 @@ require "factory/version"
 module Factory
   class Factory
     def self.new(*fields, &block)
+      
+      # Get class name
+      if fields.first && fields.first.kind_of?(String)
+        class_name = fields.shift
+      end
+
       are_symbols = fields.inject(true) {|sum, item| sum &&= item.kind_of?(Symbol)}
       
       raise TypeError, 'Symbols expected' unless are_symbols
@@ -18,6 +24,10 @@ module Factory
         fields.each do |field|
           define_method field do
             @data[field]
+          end
+
+          define_method "#{field}=".to_sym do |new_value|
+            @data[field] = new_value
           end
         end
 
@@ -78,27 +88,36 @@ module Factory
         alias_method :to_a, :values
         alias_method :==, :eql?
 
-        def [](key)
-          case key
+        def [](index)
+          index = get_key(index)
+          @data[index]
+        end
+
+        def []=(index, value)
+          key = get_key(index)
+          @data[key] = value
+        end
+
+        private
+
+        def get_key(index)
+          case index
           when Symbol
-            @data[key]
+            index
           when String
-            @data[key.to_sym]
-          when Integer
-            data_array = @data.to_a
-            if key < data_array.size
-              data_array[key].last
-            end
+            index.to_sym
+          when Fixnum
+            members[index]
           end
         end
-
-        def []=(key, value)
-        end
-
+        
       end
 
       # Add methods to class
       instance.class_eval &block if block_given?
+
+      # Assign class name
+      const_set(class_name, instance) if class_name
 
       return instance
     end
